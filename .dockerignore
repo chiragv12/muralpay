@@ -1,7 +1,9 @@
 node_modules
 dist
-tsconfig.build.tsbuildinfo
+.git
 .env
 *.log
 .DS_Store
 .cursor
+coverage
+tsconfig.build.tsbuildinfo
