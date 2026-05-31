@@ -67,7 +67,14 @@ docker build -t muralpay-api .
 docker run -p 3000:3000 --env-file .env muralpay-api
 ```
 
-On first deploy, run migrations against your hosted Postgres (`npm run prisma:migrate:deploy` in release phase or a one-off job).
+On first deploy, apply migrations and seed against your hosted Postgres **from your machine** (not inside the container):
+
+```bash
+DATABASE_URL="postgresql://..." npm run prisma:migrate:deploy
+DATABASE_URL="postgresql://..." npm run prisma:seed
+```
+
+The Docker image starts the app only (`node dist/main.js`); it does not run Prisma CLI at boot.
 
 Suggested free stack: **Render** or **Railway** (web service) + **Neon** or **Supabase** (Postgres).
 
