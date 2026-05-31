@@ -1,0 +1,697 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getServiceInfo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Service metadata",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/products": {
+      "get": {
+        "operationId": "ProductsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List active catalog items",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/orders": {
+      "post": {
+        "operationId": "OrdersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create checkout order from catalog line items",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Order detail with USDC-on-Polygon payment instructions",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/merchant/orders": {
+      "get": {
+        "operationId": "MerchantOrdersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MerchantOrderSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List orders with payment confirmation status",
+        "tags": [
+          "merchant"
+        ]
+      }
+    },
+    "/merchant/orders/{id}": {
+      "get": {
+        "operationId": "MerchantOrdersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MerchantOrderDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Order detail with payment confirmation for merchant",
+        "tags": [
+          "merchant"
+        ]
+      }
+    },
+    "/merchant/withdrawals": {
+      "get": {
+        "operationId": "MerchantWithdrawalsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WithdrawalResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List COP withdrawals linked to paid orders",
+        "tags": [
+          "merchant"
+        ]
+      }
+    },
+    "/merchant/withdrawals/{id}": {
+      "get": {
+        "operationId": "MerchantWithdrawalsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithdrawalResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Withdrawal status detail",
+        "tags": [
+          "merchant"
+        ]
+      }
+    },
+    "/webhooks/mural": {
+      "post": {
+        "operationId": "WebhooksController_handleMural",
+        "parameters": [
+          {
+            "name": "x-mural-webhook-signature",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mural-webhook-timestamp",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mural webhook ingress (account_credited → mark order PAID)",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Mural Marketplace API",
+    "description": "Sandbox marketplace backend integrating with Mural Pay staging.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "ProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true
+          },
+          "priceUsd": {
+            "type": "string",
+            "description": "USD list price (treated as USDC amount due at checkout in sandbox).",
+            "example": "45.00"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "priceUsd",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateOrderLineDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          }
+        },
+        "required": [
+          "productId",
+          "quantity"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateOrderLineDto"
+            }
+          }
+        },
+        "required": [
+          "lines"
+        ]
+      },
+      "OrderLineResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitPrice": {
+            "type": "string",
+            "example": "22.50"
+          },
+          "lineTotal": {
+            "type": "string",
+            "example": "45.00"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "sku",
+          "productName",
+          "quantity",
+          "unitPrice",
+          "lineTotal"
+        ]
+      },
+      "OrderSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_PAYMENT",
+              "PAID",
+              "WITHDRAWAL_INITIATED",
+              "WITHDRAWAL_COMPLETED",
+              "FAILED"
+            ]
+          },
+          "totalUsd": {
+            "type": "string",
+            "example": "67.50"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "totalUsd",
+          "lines",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaymentInstructionsDto": {
+        "type": "object",
+        "properties": {
+          "muralAccountId": {
+            "type": "string",
+            "description": "Mural account id funds will credit once the transfer confirms."
+          },
+          "blockchain": {
+            "type": "string",
+            "example": "POLYGON",
+            "description": "Blockchain identifier from Mural account wallet details."
+          },
+          "networkDescription": {
+            "type": "string",
+            "example": "Polygon Amoy testnet (USDC test tokens)",
+            "description": "Human-readable network hint for sandbox checkout."
+          },
+          "tokenSymbol": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "tokenContractAddress": {
+            "type": "string",
+            "description": "ERC-20 contract on the indicated chain when provided by Mural."
+          },
+          "payToWalletAddress": {
+            "type": "string",
+            "description": "Merchant settlement wallet from Mural (deposit address)."
+          },
+          "amount": {
+            "type": "string",
+            "description": "Exact stablecoin amount the customer should send for this order (USD/USDC treated 1:1).",
+            "example": "67.50"
+          },
+          "decimals": {
+            "type": "number",
+            "example": 6,
+            "description": "USDC decimals on Polygon."
+          }
+        },
+        "required": [
+          "muralAccountId",
+          "blockchain",
+          "networkDescription",
+          "tokenSymbol",
+          "payToWalletAddress",
+          "amount",
+          "decimals"
+        ]
+      },
+      "OrderDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_PAYMENT",
+              "PAID",
+              "WITHDRAWAL_INITIATED",
+              "WITHDRAWAL_COMPLETED",
+              "FAILED"
+            ]
+          },
+          "totalUsd": {
+            "type": "string",
+            "example": "67.50"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "paymentInstructions": {
+            "$ref": "#/components/schemas/PaymentInstructionsDto"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "totalUsd",
+          "lines",
+          "createdAt",
+          "updatedAt",
+          "paymentInstructions"
+        ]
+      },
+      "PaymentConfirmationDto": {
+        "type": "object",
+        "properties": {
+          "confirmed": {
+            "type": "boolean",
+            "description": "True once payment has been detected (PAID or later lifecycle states)."
+          },
+          "fundingTxHash": {
+            "type": "object",
+            "nullable": true
+          },
+          "muralTransactionId": {
+            "type": "object",
+            "nullable": true
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Approximate confirmation time (order updatedAt)."
+          }
+        },
+        "required": [
+          "confirmed"
+        ]
+      },
+      "WithdrawalResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "muralPayoutRequestId": {
+            "type": "object",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUBMITTED",
+              "COMPLETED",
+              "FAILED"
+            ]
+          },
+          "lastError": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MerchantOrderSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_PAYMENT",
+              "PAID",
+              "WITHDRAWAL_INITIATED",
+              "WITHDRAWAL_COMPLETED",
+              "FAILED"
+            ]
+          },
+          "totalUsd": {
+            "type": "string",
+            "example": "67.50"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/PaymentConfirmationDto"
+          },
+          "withdrawal": {
+            "$ref": "#/components/schemas/WithdrawalResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "totalUsd",
+          "lines",
+          "createdAt",
+          "updatedAt",
+          "payment"
+        ]
+      },
+      "MerchantOrderDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_PAYMENT",
+              "PAID",
+              "WITHDRAWAL_INITIATED",
+              "WITHDRAWAL_COMPLETED",
+              "FAILED"
+            ]
+          },
+          "totalUsd": {
+            "type": "string",
+            "example": "67.50"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/PaymentConfirmationDto"
+          },
+          "withdrawal": {
+            "$ref": "#/components/schemas/WithdrawalResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "totalUsd",
+          "lines",
+          "createdAt",
+          "updatedAt",
+          "payment"
+        ]
+      }
+    }
+  }
+}

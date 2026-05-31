@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  WITHDRAWAL_INITIATED
+  WITHDRAWAL_COMPLETED
+  FAILED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  SUBMITTED
+  COMPLETED
+  FAILED
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  sku         String   @unique
+  name        String
+  description String?
+  /// Catalog unit price in USD (matches USDC expectation for sandbox checkout).
+  priceUsd    Decimal  @db.Decimal(12, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines OrderLine[]
+}
+
+model Order {
+  id                 String      @id @default(uuid()) @db.Uuid
+  status             OrderStatus @default(PENDING_PAYMENT)
+  /// Total due in USD / USDC for the checkout (sum of lines).
+  totalUsd           Decimal     @db.Decimal(12, 2)
+  muralTransactionId String?
+  fundingTxHash      String?
+
+  lines      OrderLine[]
+  withdrawal Withdrawal?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model OrderLine {
+  id        String  @id @default(uuid()) @db.Uuid
+  orderId   String  @db.Uuid
+  productId String  @db.Uuid
+  quantity  Int
+  unitPrice Decimal @db.Decimal(12, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model Withdrawal {
+  id                   String             @id @default(uuid()) @db.Uuid
+  orderId              String             @unique @db.Uuid
+  muralPayoutRequestId String?
+  status               WithdrawalStatus   @default(PENDING)
+  lastError            String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
